@@ -1,0 +1,32 @@
+service: nest-lambda-serverless
+
+plugins:
+  - serverless-jetpack
+  - serverless-offline
+
+custom:
+  STAGE: ${self:provider.stage}
+  DB_CONFIG: ${file(./config/config.js):DATABASE_CONFIG} # config.js 에서 가져올 데이터 베이스 접속정보
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: ${opt:stage,'dev'}
+  region: ap-northeast-2
+  environment:
+    STAGE: ${self:provider.stage}
+    DB_URL: ${self:custom.DB_CONFIG.${self:custom.STAGE}.DB_URL}
+
+  ecr:
+    images:
+      nest-lambda:
+        path: ./
+
+functions:
+  api:
+    image:
+      name: nest-lambda
+      command:
+        - dist/lambda.handler
+      entryPoint:
+        - '/lambda-entrypoint.sh'
